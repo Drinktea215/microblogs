@@ -17,6 +17,7 @@ services:
     image: app
     build:
       context: .
+    command: bash -c "./run.sh && cd src && uvicorn main:app --host 0.0.0.0"
     depends_on:
       - db
     ports:

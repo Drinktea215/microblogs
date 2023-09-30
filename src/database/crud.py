@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from models import *
+from database.models import *
 from schemas import *
 from aiofiles import open
 from os.path import splitext
@@ -14,6 +14,7 @@ class UserDAL:
 
     async def add_new_user(self, api_key):
         new_user = Users(api_key=api_key, name="name")
+        self.db.add(new_user)
         await self.db.commit()
         return "Complete"
 
