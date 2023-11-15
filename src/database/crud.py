@@ -4,7 +4,7 @@ from database.models import *
 from schemas import *
 from aiofiles import open
 from os.path import splitext
-from os import renames
+from os import renames, remove
 from shutil import rmtree
 
 
@@ -68,20 +68,20 @@ class UserDAL:
         following = following.scalars().all()
 
         try:
-            user = UsersSchemas.from_orm(user)
-            user = UsersSchemas.dict(user)
+            user = UsersSchemas.model_validate(user)
+            user = UsersSchemas.model_dump(user)
         except Exception:
             return {}
 
         try:
-            followers = [UsersSchemas.from_orm(f) for f in followers]
-            followers = [UsersSchemas.dict(f) for f in followers]
+            followers = [UsersSchemas.model_validate(f) for f in followers]
+            followers = [UsersSchemas.model_dump(f) for f in followers]
         except Exception:
             followers = []
 
         try:
-            following = [UsersSchemas.from_orm(f) for f in following]
-            following = [UsersSchemas.dict(f) for f in following]
+            following = [UsersSchemas.model_validate(f) for f in following]
+            following = [UsersSchemas.model_dump(f) for f in following]
         except Exception:
             following = []
 
@@ -106,7 +106,8 @@ class TweetDAL:
             files = await self.db.execute(select(Files).where(Files.id.in_(body.tweet_media_ids)))
             files = files.scalars().all()
             for file in files:
-                renames(f"../upload_files/{file.id}{file.extension}", f"../upload_files/{new_tweet.id}/{file.id}{file.extension}")
+                renames(f"../upload_files/{file.id}{file.extension}",
+                        f"../upload_files/{new_tweet.id}/{file.id}{file.extension}")
                 file.tweet = new_tweet
                 file.link = f"../upload_files/{new_tweet.id}/{file.id}{file.extension}"
 

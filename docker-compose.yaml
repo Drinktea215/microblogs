@@ -12,6 +12,15 @@ services:
     networks:
       - custom
 
+  redis:
+    container_name: "redis"
+    image: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - custom
+
   app:
     container_name: "app"
     image: app
@@ -20,8 +29,20 @@ services:
     command: bash -c "./run.sh && cd src && uvicorn main:app --host 0.0.0.0"
     depends_on:
       - db
+      - redis
     ports:
       - "8000:8000"
+    networks:
+      - custom
+
+  nginx:
+    image: nginx
+    ports:
+      - "8080:80"
+    restart: always
+    volumes:
+      - ./static:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/conf.d/app.conf
     networks:
       - custom
 

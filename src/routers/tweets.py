@@ -2,6 +2,8 @@ from fastapi import APIRouter, Header, Depends
 from starlette.responses import JSONResponse
 from database.db import get_db
 from database.crud import *
+from redis_client import redis_cli
+import json
 
 router_tweets = APIRouter(prefix="/tweets", tags=["Tweets"])
 
@@ -36,6 +38,12 @@ async def del_like_tweet(id: int, api_key: str = Header(), db_session: AsyncSess
 
 @router_tweets.get("/")
 async def get_tweets(api_key: str = Header(), db_session: AsyncSession = Depends(get_db)):
-    udal = UserDAL(db_session)
-    result_ok, result_bad = await udal.get_all_tweets_for_user(api_key)
+    response = await redis_cli.get(f"{api_key}_get_tweets")
+    print(response)
+    if response is None:
+        udal = UserDAL(db_session)
+        result_ok, result_bad = await udal.get_all_tweets_for_user(api_key)
+        await redis_cli.set(f"{api_key}_get_tweets", json.dumps(result_ok), 10)
+    else:
+        result_ok = json.loads(response.decode("utf-8"))
     return {"result": True, "tweets": result_ok}

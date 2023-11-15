@@ -14,7 +14,7 @@ class UsersSchemas(BaseModel):
     name: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ListTweetsSchemas(BaseModel):
@@ -26,14 +26,14 @@ class ListTweetsSchemas(BaseModel):
     likes_users: list[UsersSchemas]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class LinksFilesSchemas(BaseModel):
     link: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
-ListTweetsSchemas.update_forward_refs()
+ListTweetsSchemas.model_rebuild()
