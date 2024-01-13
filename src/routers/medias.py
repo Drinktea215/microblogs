@@ -8,7 +8,25 @@ router_medias = APIRouter(prefix="/medias", tags=["Medias"])
 
 @router_medias.post("/", response_class=JSONResponse)
 async def load_file(file: UploadFile = File(...), db_session: AsyncSession = Depends(get_db)):
-    tdal = TweetDAL(db_session)
-    file_id, file_ext = await tdal.add_file_to_db(file)
-    await tdal.save_file(file, file_id, file_ext)
-    return JSONResponse(content={"result": True, "media_id": file_id})
+    try:
+        if file.size > 5242880:  # 5 Mb
+            raise MaxSizeFile
+
+        tdal = TweetDAL(db_session)
+        file_id, file_ext = await tdal.add_file_to_db(file)
+        await tdal.save_file(file, file_id, file_ext)
+        return JSONResponse(content={"result": True, "media_id": file_id})
+
+    except ApiKeyDontFind as e:
+        error = e.text
+
+    except FileDontSave as e:
+        error = e.text
+
+    except MaxSizeFile as e:
+        error = e.text
+
+    except Exception:
+        error = "Something wrong!"
+
+    return JSONResponse(content={"result": False, "error": error})

@@ -5,7 +5,7 @@ from typing import Optional
 
 
 class Tweetters(BaseModel):
-    tweet_data: str
+    tweet_data: str = Field(..., max_length=10)
     tweet_media_ids: Optional[list[int]]
 
 

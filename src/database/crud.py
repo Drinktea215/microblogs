@@ -1,7 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm.exc import FlushError
 from database.models import *
 from schemas import *
+from exc import *
 from aiofiles import open
 from os.path import splitext
 from os import renames, remove
@@ -12,8 +14,8 @@ class UserDAL:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def add_new_user(self, api_key):
-        new_user = Users(api_key=api_key, name="name")
+    async def add_new_user(self, name, api_key):
+        new_user = Users(name=name, api_key=api_key)
         self.db.add(new_user)
         await self.db.commit()
         return "Complete"
@@ -97,20 +99,23 @@ class TweetDAL:
 
     async def create_tweet(self, api_key, body: Tweetters):
         user = await find_user(api_key, self.db)
+        print("HELLO 4")
         new_tweet = Tweets(tweet_data=body.tweet_data, tweet_has_media=False, author=user) \
             if not body.tweet_media_ids else Tweets(tweet_data=body.tweet_data, tweet_has_media=True, author=user)
-
+        print("HELLO 5")
         self.db.add(new_tweet)
 
         if body.tweet_media_ids:
+            print("HELLO")
             files = await self.db.execute(select(Files).where(Files.id.in_(body.tweet_media_ids)))
             files = files.scalars().all()
+            print("HELLO 2")
             for file in files:
                 renames(f"../upload_files/{file.id}{file.extension}",
                         f"../upload_files/{new_tweet.id}/{file.id}{file.extension}")
                 file.tweet = new_tweet
                 file.link = f"../upload_files/{new_tweet.id}/{file.id}{file.extension}"
-
+            print("HELLO 3")
         await self.db.commit()
 
         return new_tweet.id
@@ -123,6 +128,7 @@ class TweetDAL:
         except Exception:
             await self.delete_files(file_id, tweet=False)
             await self.db.commit()
+            raise FileDontSave
 
     async def add_file_to_db(self, file):
         file_ext = splitext(file.filename)[1]
@@ -135,7 +141,9 @@ class TweetDAL:
 
     async def delete_tweet(self, tweet_id: int, api_key: str):
         user = await find_user(api_key, self.db)
+
         author_id = await find_tweet(tweet_id, self.db)
+        print(author_id.author_id)
         author_id = author_id.author_id
 
         if user.id == author_id:
@@ -150,7 +158,7 @@ class TweetDAL:
             return True
 
         else:
-            return False
+            raise FlushError
 
     async def delete_files(self, ids: int, tweet=True):
         if tweet:
@@ -179,11 +187,22 @@ async def find_user(param, db: AsyncSession, api_key=True) -> int:
         user = await db.execute(select(Users).where(Users.api_key == param))
     else:
         user = await db.execute(select(Users).where(Users.id == param))
+
     user = user.scalars().one_or_none()
+
+    if user is None and api_key is True:
+        raise ApiKeyDontFind()
+    elif user is None:
+        raise UserDontFind()
+
     return user
 
 
 async def find_tweet(tweet_id: int, db: AsyncSession):
     tweet = await db.execute(select(Tweets).where(Tweets.id == tweet_id))
     tweet = tweet.scalars().one_or_none()
+
+    if tweet is None:
+        raise TweetDontFind()
+
     return tweet
