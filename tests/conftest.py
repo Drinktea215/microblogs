@@ -1,56 +1,44 @@
-import asyncio
-from typing import AsyncGenerator
-import os
 import pytest
-from fastapi.testclient import TestClient
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from httpx import AsyncClient, ASGITransport
+from typing import AsyncGenerator
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import NullPool
-
+from database.crud import UserDAL
 from src.database.db import get_db
 from src.database.models import *
 from src.database.config import DB_HOST_TEST, DB_NAME_TEST, DB_PASS_TEST, DB_PORT_TEST, DB_USER_TEST
 from src.main import app
 
-# DATABASE
-DATABASE_URL_TEST = "postgresql+asyncpg://admin:admin@0.0.0.0:5433/admin"
+DATABASE_URL_TEST = f"postgresql+asyncpg://{DB_USER_TEST}:{DB_PASS_TEST}@{DB_HOST_TEST}:{DB_PORT_TEST}/{DB_NAME_TEST}"
 
 engine_test = create_async_engine(DATABASE_URL_TEST, poolclass=NullPool)
-async_session_maker = sessionmaker(engine_test, class_=AsyncSession, expire_on_commit=False)
+async_session_maker = async_sessionmaker(engine_test, class_=AsyncSession, expire_on_commit=False, autoflush=False)
 
 Base.metadata.bind = engine_test
 
 
+@pytest.fixture(scope='session')
 async def override_get_async_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_maker() as session:
         yield session
 
 
-app.dependency_overrides[get_db] = override_get_async_session
-
-
 @pytest.fixture(autouse=True, scope='session')
-async def prepare_database():
+async def create_db():
     async with engine_test.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        udal = UserDAL(conn)
+        await udal.add_new_user('Dog', 'user1')
+        await udal.add_new_user('Cat', 'user2')
+        await udal.add_new_user('Mouth', 'user3')
+        await udal.add_new_user('Fish', 'user4')
     yield
     async with engine_test.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
 
-# SETUP
-@pytest.fixture(scope='session')
-def event_loop(request):
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
+app.dependency_overrides[get_db] = override_get_async_session
 
+transport = ASGITransport(app=app)
 
-client = TestClient(app)
-
-
-@pytest.fixture(scope="session")
-async def ac() -> AsyncGenerator[AsyncClient, None]:
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        yield ac
+client = AsyncClient(transport=transport, base_url="http://test")

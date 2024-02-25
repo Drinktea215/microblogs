@@ -54,7 +54,7 @@ async def my_profile(api_key: str = Header(), db_session: AsyncSession = Depends
         if response is None:
             udal = UserDAL(db_session)
             profile = await udal.get_profile(api_key)
-            await redis_cli.set(f"{api_key}_me", json.dumps(profile), 10)
+            await redis_cli.set(f"{api_key}_me", json.dumps(profile, default=str), 10)
         else:
             profile = json.loads(response.decode("utf-8"))
         return JSONResponse(content={"result": True, "user": profile})
@@ -75,7 +75,7 @@ async def alien_profile(id: int, api_key: str = Header(), db_session: AsyncSessi
         if response is None:
             udal = UserDAL(db_session)
             profile = await udal.get_profile(id, alien=True)
-            await redis_cli.set(f"profile_{id}", json.dumps(profile), 10)
+            await redis_cli.set(f"profile_{id}", json.dumps(profile, default=str), 10)
         else:
             profile = json.loads(response.decode("utf-8"))
         return JSONResponse(content={"result": True, "user": profile})

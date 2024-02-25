@@ -5,7 +5,7 @@ from database.crud import *
 from redis_client import redis_cli
 import json
 from exc import *
-
+from fastapi.encoders import jsonable_encoder
 router_tweets = APIRouter(prefix="/tweets", tags=["Tweets"])
 
 
@@ -89,15 +89,15 @@ async def get_tweets(api_key: str = Header(), db_session: AsyncSession = Depends
         if response is None:
             udal = UserDAL(db_session)
             result_ok, result_bad = await udal.get_all_tweets_for_user(api_key)
-            await redis_cli.set(f"{api_key}_get_tweets", json.dumps(result_ok), 10)
+            await redis_cli.set(f"{api_key}_get_tweets", json.dumps(result_ok, default=str), 10)
         else:
             result_ok = json.loads(response.decode("utf-8"))
-        return JSONResponse(content={"result": True, "tweets": result_ok})
+        return JSONResponse(content={"result": True, "tweets": jsonable_encoder(result_ok)})
 
     except ApiKeyDontFind as e:
         error = e.text
 
-    except Exception:
-        error = "Something wrong!"
+    # except Exception:
+    #     error = "Something wrong!"
 
     return JSONResponse(content={"result": False, "error": error})

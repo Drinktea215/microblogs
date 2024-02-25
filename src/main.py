@@ -4,7 +4,7 @@ from routers.medias import router_medias
 from fastapi import FastAPI, APIRouter
 import uvicorn
 
-app = FastAPI(title="Clone tweetter")
+app = FastAPI(title="Microblogs")
 
 api = APIRouter(prefix="/api", tags=["Api"])
 
@@ -16,4 +16,3 @@ app.include_router(api)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
-# INSERT INTO users(name, api_key) Values ('Dog', 'user1'), ('Cat', 'user2'), ('Mouth', 'user3'), ('Fish', 'user4');

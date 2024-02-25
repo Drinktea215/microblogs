@@ -26,7 +26,7 @@ async def load_file(file: UploadFile = File(...), db_session: AsyncSession = Dep
     except MaxSizeFile as e:
         error = e.text
 
-    except Exception:
-        error = "Something wrong!"
+    # except Exception:
+    #     error = "Something wrong!"
 
     return JSONResponse(content={"result": False, "error": error})

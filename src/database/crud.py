@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.orm.exc import FlushError
 from database.models import *
 from schemas import *
@@ -99,23 +99,18 @@ class TweetDAL:
 
     async def create_tweet(self, api_key, body: Tweetters):
         user = await find_user(api_key, self.db)
-        print("HELLO 4")
         new_tweet = Tweets(tweet_data=body.tweet_data, tweet_has_media=False, author=user) \
             if not body.tweet_media_ids else Tweets(tweet_data=body.tweet_data, tweet_has_media=True, author=user)
-        print("HELLO 5")
         self.db.add(new_tweet)
 
         if body.tweet_media_ids:
-            print("HELLO")
             files = await self.db.execute(select(Files).where(Files.id.in_(body.tweet_media_ids)))
             files = files.scalars().all()
-            print("HELLO 2")
             for file in files:
                 renames(f"../upload_files/{file.id}{file.extension}",
                         f"../upload_files/{new_tweet.id}/{file.id}{file.extension}")
                 file.tweet = new_tweet
                 file.link = f"../upload_files/{new_tweet.id}/{file.id}{file.extension}"
-            print("HELLO 3")
         await self.db.commit()
 
         return new_tweet.id
@@ -124,6 +119,7 @@ class TweetDAL:
         try:
             async with open(f"../upload_files/{file_id}{file_ext}", "wb") as f:
                 file_content = await file.read()
+                a = 1 / 0
                 await f.write(file_content)
         except Exception:
             await self.delete_files(file_id, tweet=False)
@@ -143,7 +139,6 @@ class TweetDAL:
         user = await find_user(api_key, self.db)
 
         author_id = await find_tweet(tweet_id, self.db)
-        print(author_id.author_id)
         author_id = author_id.author_id
 
         if user.id == author_id:
@@ -164,11 +159,11 @@ class TweetDAL:
         if tweet:
             rmtree(f"../upload_files/{ids}")
         else:
-            files = await self.db.execute(select(Files).where(Files.id == ids))
-            files = files.scalars().all()
-            for file in files:
+            file = await self.db.execute(select(Files).where(Files.id == ids))
+            file = file.scalars().one_or_none()
+            if file is not None:
                 remove(f"../upload_files/{file.id}{file.extension}")
-                await self.db.delete(file)
+            await self.db.execute(delete(Files).where(Files.id == ids))
 
     async def like(self, tweet_id: int, api_key: str, add=True):
         user = await find_user(api_key, self.db)

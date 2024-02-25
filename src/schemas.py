@@ -1,11 +1,11 @@
 from __future__ import annotations
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 
 
 class Tweetters(BaseModel):
-    tweet_data: str = Field(..., max_length=10)
+    tweet_data: str = Field(..., max_length=100)
     tweet_media_ids: Optional[list[int]]
 
 
@@ -13,8 +13,7 @@ class UsersSchemas(BaseModel):
     id: int
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ListTweetsSchemas(BaseModel):
@@ -25,15 +24,13 @@ class ListTweetsSchemas(BaseModel):
     author: UsersSchemas
     likes_users: list[UsersSchemas]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LinksFilesSchemas(BaseModel):
     link: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 ListTweetsSchemas.model_rebuild()
