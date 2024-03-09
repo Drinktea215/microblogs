@@ -19,8 +19,8 @@ async def add_tweet(body: Tweetters, api_key: str = Header(), db_session: AsyncS
     except ApiKeyDontFind as e:
         error = e.text
 
-    except Exception:
-        error = "Something wrong!"
+    # except Exception:
+    #     error = "Something wrong!"
 
     return JSONResponse(content={"result": False, "error": error})
 

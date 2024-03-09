@@ -1,23 +1,26 @@
-class ApiKeyDontFind(Exception):
+from fastapi import HTTPException
+
+
+class ApiKeyDontFind(HTTPException):
     def __init__(self):
         self.text = "You are not registered"
 
 
-class UserDontFind(Exception):
+class UserDontFind(HTTPException):
     def __init__(self):
         self.text = "User don't find"
 
 
-class TweetDontFind(Exception):
+class TweetDontFind(HTTPException):
     def __init__(self):
         self.text = "Message don't find"
 
 
-class FileDontSave(Exception):
+class FileDontSave(HTTPException):
     def __init__(self):
         self.text = "File don't save"
 
 
-class MaxSizeFile(Exception):
+class MaxSizeFile(HTTPException):
     def __init__(self):
         self.text = "Very big file"

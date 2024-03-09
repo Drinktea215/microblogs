@@ -10,7 +10,6 @@ from src.database.config import DB_HOST_TEST, DB_NAME_TEST, DB_PASS_TEST, DB_POR
 from src.main import app
 
 DATABASE_URL_TEST = f"postgresql+asyncpg://{DB_USER_TEST}:{DB_PASS_TEST}@{DB_HOST_TEST}:{DB_PORT_TEST}/{DB_NAME_TEST}"
-
 engine_test = create_async_engine(DATABASE_URL_TEST, poolclass=NullPool)
 async_session_maker = async_sessionmaker(engine_test, class_=AsyncSession, expire_on_commit=False, autoflush=False)
 
@@ -33,12 +32,10 @@ async def create_db():
         await udal.add_new_user('Mouth', 'user3')
         await udal.add_new_user('Fish', 'user4')
     yield
-    async with engine_test.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    # async with engine_test.begin() as conn:
+    #     await conn.run_sync(Base.metadata.drop_all)
 
 
 app.dependency_overrides[get_db] = override_get_async_session
-
 transport = ASGITransport(app=app)
-
-client = AsyncClient(transport=transport, base_url="http://test")
+async_client = AsyncClient(transport=transport, base_url="http://test")
