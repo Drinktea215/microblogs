@@ -1,7 +1,7 @@
 ## Корпоративный сервис микроблогов
 
 Для запуска проекта команда:
-`docker-compose up --build`
+`docker-compose -f docker-compose-ci.yaml up --build`
 
 Бэкенд принимает несколько запросов:
 

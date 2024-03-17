@@ -22,7 +22,7 @@ class ListTweetsSchemas(BaseModel):
     tweet_date_create: datetime
     attachments: list[LinksFilesSchemas] = Field(..., alias='media')
     author: UsersSchemas
-    likes_users: list[UsersSchemas]
+    likes: list[UsersSchemas]
 
     model_config = ConfigDict(from_attributes=True)
 

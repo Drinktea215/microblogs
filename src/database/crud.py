@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, and_
 from sqlalchemy.orm.exc import FlushError
 from database.models import *
 from schemas import *
@@ -33,12 +33,7 @@ class UserDAL:
         await self.db.commit()
 
     async def get_all_tweets_for_user(self, api_key):
-        user = await find_user(api_key, self.db)
-        followed = await self.db.execute(user.followed)
-        followed = followed.scalars().all()
-        followed = [x.id for x in followed]
-
-        tweets = await self.db.execute(select(Tweets).where(Tweets.author_id.in_(followed)))
+        tweets = await self.db.execute(select(Tweets))
         tweets = tweets.scalars().all()
 
         tweets.sort(key=lambda x: x.tweet_date_create, reverse=True)
@@ -50,6 +45,7 @@ class UserDAL:
                 tweet = ListTweetsSchemas.from_orm(tweet)
                 tweet = ListTweetsSchemas.dict(tweet, by_alias=False)
                 tweet["attachments"] = [x["link"] for x in tweet["attachments"]]
+                tweet["likes"] = [{"user_id": x["id"], "name": x["name"]} for x in tweet["likes"]]
                 tweets_ok.append(tweet)
 
             except Exception:
@@ -119,7 +115,6 @@ class TweetDAL:
         try:
             async with open(f"../upload_files/{file_id}{file_ext}", "wb") as f:
                 file_content = await file.read()
-                a = 1 / 0
                 await f.write(file_content)
         except Exception:
             await self.delete_files(file_id, tweet=False)
@@ -168,11 +163,19 @@ class TweetDAL:
     async def like(self, tweet_id: int, api_key: str, add=True):
         user = await find_user(api_key, self.db)
         tweet = await find_tweet(tweet_id, self.db)
+        like_is_exist = user in tweet.likes
 
         if add is True:
-            tweet.likes_users.append(user)
+            if like_is_exist is False:
+                tweet.likes.append(user)
+            else:
+                raise LikeIsExist
+
         else:
-            tweet.likes_users.remove(user)
+            if like_is_exist is True:
+                tweet.likes.remove(user)
+            else:
+                raise LikeDoesntExist
 
         await self.db.commit()
 

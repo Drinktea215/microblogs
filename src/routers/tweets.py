@@ -6,6 +6,7 @@ from redis_client import redis_cli
 import json
 from exc import *
 from fastapi.encoders import jsonable_encoder
+
 router_tweets = APIRouter(prefix="/tweets", tags=["Tweets"])
 
 
@@ -17,12 +18,14 @@ async def add_tweet(body: Tweetters, api_key: str = Header(), db_session: AsyncS
         return JSONResponse(content={"result": True, "tweet_id": tweet_id})
 
     except ApiKeyDontFind as e:
-        error = e.text
+        error_text = e.text
+        error_type = e.type
 
-    # except Exception:
-    #     error = "Something wrong!"
+    except Exception:
+        error_text = "Something wrong!"
+        error_type = "Exception"
 
-    return JSONResponse(content={"result": False, "error": error})
+    return JSONResponse(content={"result": False, "error_type": error_type, "error_message": error_text})
 
 
 @router_tweets.delete("/{id}", response_class=JSONResponse)
@@ -34,15 +37,18 @@ async def del_tweet(id: int, api_key: str = Header(), db_session: AsyncSession =
         return JSONResponse(content={"result": result})
 
     except TweetDontFind as e:
-        error = e.text
+        error_text = e.text
+        error_type = e.type
 
     except ApiKeyDontFind as e:
-        error = e.text
+        error_text = e.text
+        error_type = e.type
 
     except Exception:
-        error = "Something wrong!"
+        error_text = "Something wrong!"
+        error_type = "Exception"
 
-    return JSONResponse(content={"result": False, "error": error})
+    return JSONResponse(content={"result": False, "error_type": error_type, "error_message": error_text})
 
 
 @router_tweets.post("/{id}/likes", response_class=JSONResponse)
@@ -51,16 +57,24 @@ async def add_like_tweet(id: int, api_key: str = Header(), db_session: AsyncSess
         tdal = TweetDAL(db_session)
         await tdal.like(id, api_key, add=True)
         return JSONResponse(content={"result": True})
+
     except TweetDontFind as e:
-        error = e.text
+        error_text = e.text
+        error_type = e.type
+
+    except LikeIsExist as e:
+        error_text = e.text
+        error_type = e.type
 
     except ApiKeyDontFind as e:
-        error = e.text
+        error_text = e.text
+        error_type = e.type
 
     except Exception:
-        error = "Something wrong!"
+        error_text = "Something wrong!"
+        error_type = "Exception"
 
-    return JSONResponse(content={"result": False, "error": error})
+    return JSONResponse(content={"result": False, "error_type": error_type, "error_message": error_text})
 
 
 @router_tweets.delete("/{id}/likes", response_class=JSONResponse)
@@ -71,15 +85,22 @@ async def del_like_tweet(id: int, api_key: str = Header(), db_session: AsyncSess
         return JSONResponse(content={"result": True})
 
     except TweetDontFind as e:
-        error = e.text
+        error_text = e.text
+        error_type = e.type
+
+    except LikeDoesntExist as e:
+        error_text = e.text
+        error_type = e.type
 
     except ApiKeyDontFind as e:
-        error = e.text
+        error_text = e.text
+        error_type = e.type
 
     except Exception:
-        error = "Something wrong!"
+        error_text = "Something wrong!"
+        error_type = "Exception"
 
-    return JSONResponse(content={"result": False, "error": error})
+    return JSONResponse(content={"result": False, "error_type": error_type, "error_message": error_text})
 
 
 @router_tweets.get("/", response_class=JSONResponse)
@@ -95,9 +116,11 @@ async def get_tweets(api_key: str = Header(), db_session: AsyncSession = Depends
         return JSONResponse(content={"result": True, "tweets": jsonable_encoder(result_ok)})
 
     except ApiKeyDontFind as e:
-        error = e.text
+        error_text = e.text
+        error_type = e.type
 
-    # except Exception:
-    #     error = "Something wrong!"
+    except Exception:
+        error_text = "Something wrong!"
+        error_type = "Exception"
 
-    return JSONResponse(content={"result": False, "error": error})
+    return JSONResponse(content={"result": False, "error_type": error_type, "error_message": error_text})

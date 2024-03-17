@@ -17,15 +17,18 @@ async def add_follow(id: int, api_key: str = Header(), db_session: AsyncSession 
         return JSONResponse(content={"result": True})
 
     except ApiKeyDontFind as e:
-        error = e.text
+        error_text = e.text
+        error_type = e.type
 
     except UserDontFind as e:
-        error = e.text
+        error_text = e.text
+        error_type = e.type
 
     except Exception:
-        error = "Something wrong!"
+        error_text = "Something wrong!"
+        error_type = "Exception"
 
-    return JSONResponse(content={"result": False, "error": error})
+    return JSONResponse(content={"result": False, "error_type": error_type, "error_message": error_text})
 
 
 @router_users.delete("/{id}/follow", response_class=JSONResponse)
@@ -36,15 +39,18 @@ async def del_follow(id: int, api_key: str = Header(), db_session: AsyncSession 
         return JSONResponse(content={"result": True})
 
     except ApiKeyDontFind as e:
-        error = e.text
+        error_text = e.text
+        error_type = e.type
 
     except UserDontFind as e:
-        error = e.text
+        error_text = e.text
+        error_type = e.type
 
     except Exception:
-        error = "Something wrong!"
+        error_text = "Something wrong!"
+        error_type = "Exception"
 
-    return JSONResponse(content={"result": False, "error": error})
+    return JSONResponse(content={"result": False, "error_type": error_type, "error_message": error_text})
 
 
 @router_users.get("/me", response_class=JSONResponse)
@@ -60,12 +66,14 @@ async def my_profile(api_key: str = Header(), db_session: AsyncSession = Depends
         return JSONResponse(content={"result": True, "user": profile})
 
     except ApiKeyDontFind as e:
-        error = e.text
+        error_text = e.text
+        error_type = e.type
 
     except Exception:
-        error = "Something wrong!"
+        error_text = "Something wrong!"
+        error_type = "Exception"
 
-    return JSONResponse(content={"result": False, "error": error})
+    return JSONResponse(content={"result": False, "error_type": error_type, "error_message": error_text})
 
 
 @router_users.get("/{id}", response_class=JSONResponse)
@@ -81,12 +89,15 @@ async def alien_profile(id: int, api_key: str = Header(), db_session: AsyncSessi
         return JSONResponse(content={"result": True, "user": profile})
 
     except ApiKeyDontFind as e:
-        error = e.text
+        error_text = e.text
+        error_type = e.type
 
     except UserDontFind as e:
-        error = e.text
+        error_text = e.text
+        error_type = e.type
 
     except Exception:
-        error = "Something wrong!"
+        error_text = "Something wrong!"
+        error_type = "Exception"
 
-    return JSONResponse(content={"result": False, "error": error})
+    return JSONResponse(content={"result": False, "error_type": error_type, "error_message": error_text})
