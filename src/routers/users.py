@@ -4,6 +4,7 @@ from database.db import get_db
 from database.crud import *
 from exc import ApiKeyDontFind, UserDontFind
 from redis_client import redis_cli
+from logger import logger
 import json
 
 router_users = APIRouter(prefix="/users", tags=["Users"])
@@ -19,14 +20,17 @@ async def add_follow(id: int, api_key: str = Header(), db_session: AsyncSession 
     except ApiKeyDontFind as e:
         error_text = e.text
         error_type = e.type
+        logger.warn(error_type)
 
     except UserDontFind as e:
         error_text = e.text
         error_type = e.type
+        logger.warn(error_type)
 
     except Exception:
         error_text = "Something wrong!"
         error_type = "Exception"
+        logger.error(error_type)
 
     return JSONResponse(content={"result": False, "error_type": error_type, "error_message": error_text})
 
@@ -41,14 +45,17 @@ async def del_follow(id: int, api_key: str = Header(), db_session: AsyncSession 
     except ApiKeyDontFind as e:
         error_text = e.text
         error_type = e.type
+        logger.warn(error_type)
 
     except UserDontFind as e:
         error_text = e.text
         error_type = e.type
+        logger.warn(error_type)
 
     except Exception:
         error_text = "Something wrong!"
         error_type = "Exception"
+        logger.error(error_type)
 
     return JSONResponse(content={"result": False, "error_type": error_type, "error_message": error_text})
 
@@ -68,10 +75,12 @@ async def my_profile(api_key: str = Header(), db_session: AsyncSession = Depends
     except ApiKeyDontFind as e:
         error_text = e.text
         error_type = e.type
+        logger.warn(error_type)
 
     except Exception:
         error_text = "Something wrong!"
         error_type = "Exception"
+        logger.error(error_type)
 
     return JSONResponse(content={"result": False, "error_type": error_type, "error_message": error_text})
 
@@ -91,13 +100,16 @@ async def alien_profile(id: int, api_key: str = Header(), db_session: AsyncSessi
     except ApiKeyDontFind as e:
         error_text = e.text
         error_type = e.type
+        logger.warn(error_type)
 
     except UserDontFind as e:
         error_text = e.text
         error_type = e.type
+        logger.warn(error_type)
 
     except Exception:
         error_text = "Something wrong!"
         error_type = "Exception"
+        logger.error(error_type)
 
     return JSONResponse(content={"result": False, "error_type": error_type, "error_message": error_text})

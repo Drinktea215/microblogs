@@ -11,6 +11,12 @@ from src.database.crud import UserDAL
 # from src.database.crud import *
 
 
+# udal = UserDAL(get_db())
+# udal.add_new_user('Dog', 'user1')
+# udal.add_new_user('Cat', 'user2')
+# udal.add_new_user('Mouth', 'user3')
+# udal.add_new_user('Fish', 'user4')
+# udal.add_new_user('test', 'test')
 async def test_add_users():
     # assert True
     response = await async_client.post(
