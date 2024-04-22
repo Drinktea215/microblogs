@@ -1,0 +1,62 @@
+version: "3.9"
+services:
+  db:
+    container_name: "db"
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=mb_db
+    ports:
+      - "5432:5432"
+    networks:
+      - custom
+
+  redis:
+    container_name: "redis"
+    image: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - custom
+
+  app:
+    image: app
+    deploy:
+      mode: replicated
+      replicas: 5
+    build:
+      context: .
+    command: bash -c "./run.sh && cd src && gunicorn main:app --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000"
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "8000-8004:8000"
+    volumes:
+      - ./upload_files:/upload_files
+      - ./logs:/logs
+    networks:
+      - custom
+
+  nginx:
+    container_name: "nginx"
+    image: nginx
+    ports:
+      - "80:80"
+    restart: always
+    volumes:
+      - ./static:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./upload_files:/usr/share/nginx/html/upload_files
+      - ./logs:/var/log/nginx/
+    depends_on:
+      - app
+    networks:
+      - custom
+
+networks:
+  custom:
+    driver: bridge
